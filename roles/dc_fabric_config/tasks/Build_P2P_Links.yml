@@ -1,0 +1,54 @@
+---
+
+# Build the Peer2peer links between our Spines and Leaves.
+# every Leaf will connect with eth1 to spine1 and with eth2 to spine2
+# on the spine each eth interface nr to the corresponding leaf nr e.g. eth3 = DCAMS-Leaf3
+
+- name: Configure Physical Layer
+  block:
+    - name: Interfaces Leaf
+      eos_interfaces:
+        config:
+          - name: 'Ethernet{{ item }}'
+            description: 'P2P Link with {{ site }}-Spine{{ item }}'
+            enabled: true
+        state: merged
+      when: "'Leaf' in group_names"
+      with_sequence: start=1 end="{{SPINE_COUNT}}"
+    - name: Interfaces Spine
+      eos_interfaces:
+        config:
+          - name: 'Ethernet{{ item }}'
+            description: 'P2P Link with {{ site }}-Leaf{{ item }}'
+            enabled: true
+        state: merged
+      when: "'Spine' in group_names"
+      with_sequence: start=1 end="{{LEAF_COUNT}}"
+  ignore_errors: yes
+  tags: p2p
+
+# iterate over the p2p subnets and if your hostname is in the description and you are a member of the right group
+# then assign the IP to the interface matching the peer (Leaf or spine) number
+# e.g. DCAMS-Spine1 is connected to DCAMS-Leaf2 on Eth2 so Eth2 gets IP 172.31.1.2/31
+# Since the description for that subnet contains its hostname and the nr of the Leaf is 2
+
+- name: Configure IP layer
+  block:
+    - name: IP address Spine
+      arista.eos.eos_l3_interfaces:
+        config:
+        - name: Ethernet"{{item.description | regex_search('DCAMS-Leaf([0-9])+')}}"
+          ipv4:
+          - address: "{{item.ipv4}}"
+        state: merged
+      when: (inventory_hostname in item.description) and (inventory_hostname in groups['Spine'])
+      loop: "{{p2p_links}}"
+    - name: IP address Leaf
+      arista.eos.eos_l3_interfaces:
+        config:
+        - name: Ethernet"{{item.description | regex_search('DCAMS-Spine([0-9])+')}}"
+          ipv4:
+          - address: "{{item.ipv4 | ansible.netcommon.ipaddr('1')}}"
+        state: merged
+      when: (inventory_hostname in item.description) and (inventory_hostname in groups['Leaf'])
+      loop: "{{p2p_links}}"

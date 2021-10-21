@@ -1,0 +1,58 @@
+# Following play setups Management and Hardening
+---
+
+- name: PLAY 00 - Management Plane Hardening
+  hosts: Arista
+  connection: httpapi
+  gather_facts: no
+
+  tasks:
+
+# eos_system module does not work properly with vrf parameters in Ansible 2.9.9
+    - name: Set Hostname and DNS
+      eos_config:
+        lines:
+          - hostname {{ inventory_hostname }}
+          - dns domain netauto.com
+          - ip domain lookup source-interface Management1
+          - ip name-server vrf Management {{ dns[0] }}
+          - ip name-server vrf Management {{ dns[1] }}
+
+    - name: Enable eAPI on Devices
+      eos_eapi:
+        https_port: 443
+        https: yes
+        state: started
+        vrf: Management
+
+    - name: Implement Login Banner
+      eos_banner:
+        banner: login
+        text: |
+          You are entering our domain be warned!
+          Seriously though we will kick you out if you are unauthorized.
+          Unless you bring cake.
+          The Network Engineering team.
+        state: present
+
+    - name: Implement Logging
+      eos_logging:
+        aggregate:
+          - {dest: buffered, size: 5000, level: notifications}
+          - {dest: host, name: "{{ syslog[0] }}", level: warnings}
+        state: present
+
+    - name: include loopback_ip list
+      include_vars: 'roles/dc_fabric_config/vars/main.yml'
+      tags: loopback
+
+    - name: Configure Loopback IP
+      arista.eos.eos_l3_interfaces:
+        config:
+        - name: Loopback0
+          ipv4:
+          - address: "{{item.ipv4}}"
+        state: merged
+      loop: "{{Loopback_ip}}"
+      when: inventory_hostname in item.description
+      tags: loopback

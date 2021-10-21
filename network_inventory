@@ -1,0 +1,31 @@
+[Leaf]
+DCAMS-Leaf1 ansible_host=192.168.108.13
+DCAMS-Leaf2 ansible_host=192.168.108.14
+
+[Spine]
+DCAMS-Spine1 ansible_host=192.168.108.11
+DCAMS-Spine2 ansible_host=192.168.108.12
+
+[Arista:children]
+Leaf
+Spine
+
+[Arista:vars]
+ansible_network_os=eos
+
+[InternetFW]
+DCAMS-FW1 ansible_host=192.168.108.20
+
+[Fortinet:children]
+InternetFW
+
+[Fortinet:vars]
+ansible_network_os=fortios
+
+[Ubuntu_Servers]
+AutomationServer ansible_host=192.168.107.250
+
+[DCAMS:children]
+Arista
+Fortinet
+Ubuntu_Servers

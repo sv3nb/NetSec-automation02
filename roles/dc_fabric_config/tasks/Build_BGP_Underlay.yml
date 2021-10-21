@@ -1,0 +1,30 @@
+---
+
+- name: Underlay BGP Templates
+  block:
+    - name: Underlay BGP Leaf
+      template:
+        src: "eos/leaf/underlay_bgp.j2"
+        dest: "roles/dc_fabric_config/configs/leaf/{{ inventory_hostname }}"
+      when: "'Leaf' in group_names"
+
+    - name: Underlay BGP Spine
+      template:
+        src: "eos/spine/underlay_bgp.j2"
+        dest: "roles/dc_fabric_config/configs/spine/{{ inventory_hostname }}"
+      when: "'Spine' in group_names"
+  delegate_to: localhost
+  tags: bgp
+
+- name: Push Underlay Configuration
+  block:
+    - name: Push Underlay Config Leaf
+      eos_config:
+        src: "roles/dc_fabric_config/configs/leaf/{{ inventory_hostname }}"
+      when: "'Leaf' in group_names"
+
+    - name: Push Underlay Config Spine
+      eos_config:
+        src: "roles/dc_fabric_config/configs/spine/{{ inventory_hostname }}"
+      when: "'Spine' in group_names"
+  tags: bgp

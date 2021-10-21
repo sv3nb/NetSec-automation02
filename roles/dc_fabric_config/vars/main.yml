@@ -1,0 +1,31 @@
+---
+
+# Peer-to-peer links Spine-leaf nodes
+# we build a ebgp peering between each Leaf and all spines
+# each Leaf will have its own ASN based on its name e.g. DCAMS-Leaf02 has ASN: 65002
+# The spines are all in ASN 65100
+
+BASE_ASN: 65000
+fabric_subnet: 172.31.1.0/24
+loopback_subnet: 10.100.1.0/24
+site: DCAMS
+
+p2p_links:
+  - ipv4: 172.31.1.0/31
+    description: Interconnect DCAMS-Spine1 DCAMS-Leaf1
+  - ipv4: 172.31.1.2/31
+    description: Interconnect DCAMS-Spine1 DCAMS-Leaf2
+  - ipv4: 172.31.1.4/31
+    description: Interconnect DCAMS-Spine2 DCAMS-Leaf1
+  - ipv4: 172.31.1.6/31
+    description: Interconnect DCAMS-Spine2 DCAMS-Leaf2
+
+Loopback_ip:
+  - ipv4: 10.100.1.1/32
+    description: DCAMS-Spine1
+  - ipv4: 10.100.1.2/32
+    description: DCAMS-Spine2
+  - ipv4: 10.100.1.10/32
+    description: DCAMS-Leaf1
+  - ipv4: 10.100.1.11/32
+    description: DCAMS-Leaf2

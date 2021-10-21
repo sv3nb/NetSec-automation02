@@ -1,0 +1,32 @@
+---
+- name: PLAY 00 - Clean up BGP configuration
+  hosts: Arista
+  connection: network_cli
+  gather_facts: no
+  tasks:
+
+# eos_bgp_global did not work properly when trying to delete all bgp config
+
+    - name: Delete configuration
+      arista.eos.eos_config:
+        lines:
+          - "no router bgp 65100"
+      when: "'Spine' in inventory_hostname"
+
+    - name: Delete configuration
+      arista.eos.eos_config:
+        lines:
+          - "no router bgp {{ 65000 | int + ( inventory_hostname | regex_search('([0-9])+') | int )}}"
+      when: "'Leaf' in inventory_hostname"
+
+    - name: Clean up IP prefix list
+      arista.eos.eos_prefix_lists:
+        config:
+          - afi: "ipv4"
+        state: deleted
+
+    - name: Delete route-map
+      arista.eos.eos_route_maps:
+        config:
+          - route_map: "loopback"
+        state: deleted

@@ -1,0 +1,23 @@
+# Following Displays neighbors for our Leaf switches
+# I set display_skipped_hosts = False in ansible.cfg
+---
+
+- name: PLAY 00 - Retrieve Facts From Arista Devices
+  hosts: Arista
+  connection: httpapi
+  gather_facts: no
+
+  tasks:
+    - name: Gather Facts
+      eos_facts:
+      register: arista_facts
+
+    - name: Set Interfaces Var
+      set_fact: interfaces="{{arista_facts.ansible_facts.ansible_net_neighbors}}"
+
+    - name: Show Neighbors For Each Leaf
+      debug:
+        msg: '{{ inventory_hostname }} has neighbor {{ item.value[0]["host"] }} on interface {{ item.key }}'
+      when: '"Leaf" in inventory_hostname and "Management" not in item.key'
+      with_dict: "{{interfaces}}"
+      ignore_errors: yes
