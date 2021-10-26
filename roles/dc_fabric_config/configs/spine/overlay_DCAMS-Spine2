@@ -1,0 +1,22 @@
+
+service routing protocols model multi-agent
+!
+router bgp 65100
+  neighbor LEAF_EVPN peer group
+  neighbor LEAF_EVPN description "Peer group for all LEAF EVPN nodes"
+  neighbor LEAF_EVPN graceful-restart-helper
+  neighbor LEAF_EVPN send-community extended
+  neighbor LEAF_EVPN maximum-routes 10000 warning-only
+  neighbor LEAF_EVPN ebgp-multihop 2
+  neighbor LEAF_EVPN update-source Loopback0
+  neighbor 10.100.1.10 peer-group LEAF_EVPN
+  neighbor 10.100.1.10 remote-as 65001
+  neighbor 10.100.1.11 peer-group LEAF_EVPN
+  neighbor 10.100.1.11 remote-as 65002
+  !
+  address-family EVPN
+  neighbor LEAF_EVPN activate
+  !
+  address-family ipv4
+  no neighbor LEAF_EVPN activate
+!

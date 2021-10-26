@@ -1,0 +1,20 @@
+---
+
+
+- name: VXLAN Templates
+  block:
+    - name: include ASN and loopback
+      include_vars: 'roles/dc_fabric_config/vars/main.yml'
+
+    - name: Build VXLAN Template
+      template:
+        src: "eos/leaf/vxlan_tun.j2"
+        dest: "roles/dc_vlan_config/configs/leaf/vxlan_tun_{{ inventory_hostname }}"
+      when: "'Leaf' in group_names"
+
+    - name: Push VXLAN Config Leaf
+      eos_config:
+        src: "roles/dc_vlan_config/configs/leaf/vxlan_tun_{{ inventory_hostname }}"
+        save_when: changed
+      when: "'Leaf' in group_names"
+  tags: vxlan

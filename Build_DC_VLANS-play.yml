@@ -1,0 +1,16 @@
+# Following play calls a role containing tasks for setting up p2p links, bgp, evpn
+
+---
+- name: PLAY 00 - Build DC VLANS
+  hosts: Leaf
+  connection: network_cli
+  gather_facts: no
+
+# vars on Playbook level persist throughout tasks in roles
+  vars:
+    SPINE_COUNT: "{{ groups['Spine'] | length }}"
+    LEAF_COUNT: "{{ groups['Leaf'] | length }}"
+
+  tasks:
+    - import_role:
+        name: dc_vlan_config

@@ -1,0 +1,26 @@
+
+# To set vars inside running a loop you need to use a namespace
+# if you wish to reference the vars outside the loop
+
+
+
+interface vxlan1
+  vxlan source-interface loopback0
+  vxlan udp-port 4789
+  vxlan vlan 100 vni 1100
+  vxlan vlan 200 vni 1200
+  vxlan vlan 300 vni 1300
+  !
+router bgp 65002
+  vlan 100
+    rd 10.100.1.11:1100
+    route-target both 1100:1100
+    redistribute learned
+  vlan 200
+    rd 10.100.1.11:1200
+    route-target both 1200:1200
+    redistribute learned
+  vlan 300
+    rd 10.100.1.11:1300
+    route-target both 1300:1300
+    redistribute learned

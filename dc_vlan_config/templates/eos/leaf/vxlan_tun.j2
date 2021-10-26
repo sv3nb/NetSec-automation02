@@ -1,0 +1,34 @@
+
+# To set vars inside running a loop you need to use a namespace
+# if you wish to reference the vars outside the loop
+
+{% set L0 = namespace(LOOPBACK=ip) %}
+{% for item in Loopback_ip %}
+{% if inventory_hostname == item.description %}
+{% set L0.LOOPBACK = item.ipv4 %}
+{% endif %}
+{% endfor %}
+
+{% set ASN_NR = (inventory_hostname | regex_search('([0-9]+)')) %}
+{% set LEAF_ASN = ASN_NR | int + BASE_ASN | int %}
+
+interface vxlan1
+  vxlan source-interface loopback0
+  vxlan udp-port 4789
+{% for vlan in vlans | map(attribute='vid') | list %}
+{% if vlan != 999 %}
+{% set vni= vlan|int + 1000 %}
+  vxlan vlan {{ vlan }} vni {{ vni }}
+{% endif %}
+{% endfor %}
+  !
+router bgp {{ LEAF_ASN }}
+{% for vlan in vlans | map(attribute='vid') | list %}
+{% if vlan != 999 %}
+{% set vni= vlan|int + 1000 %}
+  vlan {{ vlan }}
+    rd {{ L0.LOOPBACK.split('/')[0] }}:{{ vni }}
+    route-target both {{ vni }}:{{ vni }}
+    redistribute learned
+{% endif %}
+{% endfor %}

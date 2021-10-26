@@ -1,0 +1,32 @@
+---
+
+- name: Overlay EVPN Templates
+  block:
+    - name: Overlay EVPN Leaf
+      template:
+        src: "eos/leaf/overlay_bgp.j2"
+        dest: "roles/dc_fabric_config/configs/leaf/overlay_{{ inventory_hostname }}"
+      when: "'Leaf' in group_names"
+
+    - name: Overlay EVPN Spine
+      template:
+        src: "eos/spine/overlay_bgp.j2"
+        dest: "roles/dc_fabric_config/configs/spine/overlay_{{ inventory_hostname }}"
+      when: "'Spine' in group_names"
+  delegate_to: localhost
+  tags: evpn, build
+
+- name: Push Overlay Configuration
+  block:
+    - name: Push Overlay Config Leaf
+      eos_config:
+        src: "roles/dc_fabric_config/configs/leaf/overlay_{{ inventory_hostname }}"
+        save_when: changed
+      when: "'Leaf' in group_names"
+
+    - name: Push Overlay Config Spine
+      eos_config:
+        src: "roles/dc_fabric_config/configs/spine/overlay_{{ inventory_hostname }}"
+        save_when: changed
+      when: "'Spine' in group_names"
+  tags: evpn, push

@@ -10,36 +10,35 @@
 {% endfor %}
 
 ip prefix-list loopback
-{% for lo in Loopback_ip %}
+{% for lo in Loopback_ip -%}
 {% if 'Leaf' in lo.description or inventory_hostname in lo.description %}
 seq {{ loop.index + 10 }} permit {{ lo.ipv4 }}
 {% endif %}
 {% endfor %}
-exit
-
+!
 route-map loopback permit 10
 match ip address prefix-list loopback
-exit
-
-router bgp 65100
-router-id {{ L0.LOOPBACK.split('/')[0] }}
-maximum-paths 2
-bgp bestpath tie-break router-id
-neighbor LEAF peer-group
-neighbor LEAF description "Peer Group for All LEAF Nodes"
-neighbor LEAF graceful-restart-helper
-neighbor LEAF send-community standard extended
-neighbor LEAF maximum-routes 1000 warning-only
-{% for peer in p2p_links %}
-{% if inventory_hostname in peer.description %}
-{% set ASN_NR = (peer.description | regex_search('Leaf([0-9]+)') | regex_replace ("[A-Za-z]","")) %}
-{% set LEAF_ASN = ASN_NR | int + BASE_ASN | int %}
-neighbor {{ peer.ipv4 | nthhost(1) }} peer-group LEAF
-neighbor {{ peer.ipv4 | nthhost(1) }} remote-as {{ LEAF_ASN }}
-{% endif %}
-{% endfor %}
-redistribute connected route-map loopback
 !
-address-family ipv4
-neighbor LEAF activate
-neighbor LEAF route-map loopback out
+router bgp 65100
+  router-id {{ L0.LOOPBACK.split('/')[0] }}
+  maximum-paths 2
+  bgp bestpath tie-break router-id
+  neighbor LEAF peer group
+  neighbor LEAF description "Peer Group for All LEAF Nodes"
+  neighbor LEAF graceful-restart-helper
+  neighbor LEAF send-community standard extended
+  neighbor LEAF maximum-routes 1000 warning-only
+  {% for peer in p2p_links -%}
+  {%- if inventory_hostname in peer.description -%}
+  {% set ASN_NR = (peer.description | regex_search('Leaf([0-9]+)') | regex_replace ("[A-Za-z]","")) -%}
+  {% set LEAF_ASN = ASN_NR | int + BASE_ASN | int -%}
+  neighbor {{ peer.ipv4 | nthhost(1) }} peer-group LEAF
+  neighbor {{ peer.ipv4 | nthhost(1) }} remote-as {{ LEAF_ASN }}
+  {% endif -%}
+  {% endfor -%}
+  redistribute connected route-map loopback
+  !
+  address-family ipv4
+  neighbor LEAF activate
+  neighbor LEAF route-map loopback out
+!
