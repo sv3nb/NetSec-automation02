@@ -1,0 +1,26 @@
+---
+
+- name: Configure VLANS
+  block:
+    - name: Deploy VLANS on Leaf switches
+      arista.eos.eos_vlans:
+        config:
+          - vlan_id: "{{ item.vid }}"
+            name: "{{ item.name }}"
+            state: active
+        state: merged
+      loop: "{{ vlans }}"
+
+# eth8-12 will configured as trunks with vlans 100,200,300
+# The Vswitches on the connected hosts will assign the correct VM/container to the correct VLAN
+
+    - name: Configure Trunks on Leaf switches
+      arista.eos.eos_l2_interfaces:
+        config:
+          - name: 'ethernet{{ item }}'
+            mode: trunk
+            trunk:
+              native_vlan: 999
+              trunk_allowed_vlans: 100,200,300
+        state: merged
+      loop: "{{ range(8, 12)|list}}"

@@ -14,29 +14,28 @@
 
 ip prefix-list loopback
 seq 10 permit {{ L0.LOOPBACK }}
-exit
-
+!
 route-map loopback permit 10
 match ip address prefix-list loopback
-exit
-
-router bgp {{ LEAF_ASN }}
-router-id {{ L0.LOOPBACK.split('/')[0] }}
-maximum-paths 2
-bgp bestpath tie-break router-id
-neighbor SPINE peer-group
-neighbor SPINE description "Peer Group for All SPINE Nodes"
-neighbor SPINE graceful-restart-helper
-neighbor SPINE send-community standard extended
-neighbor SPINE maximum-routes 1000 warning-only
-{% for peer in p2p_links %}
-{% if inventory_hostname in peer.description %}
-neighbor {{ peer.ipv4.split('/')[0] }} peer-group SPINE
-neighbor {{ peer.ipv4.split('/')[0] }} remote-as 65100
-{% endif %}
-{% endfor %}
-redistribute connected route-map loopback
 !
-address-family ipv4
-neighbor SPINE activate
-neighbor SPINE route-map loopback out
+router bgp {{ LEAF_ASN }}
+  router-id {{ L0.LOOPBACK.split('/')[0] }}
+  maximum-paths 2
+  bgp bestpath tie-break router-id
+  neighbor SPINE peer group
+  neighbor SPINE description "Peer Group for All SPINE Nodes"
+  neighbor SPINE graceful-restart-helper
+  neighbor SPINE send-community standard extended
+  neighbor SPINE maximum-routes 1000 warning-only
+  {% for peer in p2p_links -%}
+  {%- if inventory_hostname in peer.description -%}
+  neighbor {{ peer.ipv4.split('/')[0] }} peer-group SPINE
+  neighbor {{ peer.ipv4.split('/')[0] }} remote-as 65100
+  {% endif -%}
+  {% endfor -%}
+  redistribute connected route-map loopback
+  !
+  address-family ipv4
+  neighbor SPINE activate
+  neighbor SPINE route-map loopback out
+!

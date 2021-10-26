@@ -11,3 +11,7 @@
 - name: Build BGP Underlay
   include_tasks: Build_BGP_Underlay.yml
   tags: bgp
+
+- name: Build EVPN Overlay
+  include_tasks: Build_EVPN_Overlay.yml
+  tags: evpn, build

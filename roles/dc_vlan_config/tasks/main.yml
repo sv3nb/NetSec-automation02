@@ -1,0 +1,9 @@
+---
+
+# This is the main task from which we call all subordinate tasks t
+
+# Build the Peer2peer links between our Spines and Leaves.
+
+- name: Build VLANS
+  include_tasks: Build_VLANS.yml
+  tags: vlans

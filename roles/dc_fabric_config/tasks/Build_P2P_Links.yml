@@ -3,24 +3,27 @@
 # Build the Peer2peer links between our Spines and Leaves.
 # every Leaf will connect with eth1 to spine1 and with eth2 to spine2
 # on the spine each eth interface nr to the corresponding leaf nr e.g. eth3 = DCAMS-Leaf3
+# Always Use the FQCN or you can get errors when trying to set certain parameters!
 
 - name: Configure Physical Layer
   block:
     - name: Interfaces Leaf
-      eos_interfaces:
+      arista.eos.eos_interfaces:
         config:
           - name: 'Ethernet{{ item }}'
             description: 'P2P Link with {{ site }}-Spine{{ item }}'
             enabled: true
+            mode: layer3
         state: merged
       when: "'Leaf' in group_names"
       with_sequence: start=1 end="{{SPINE_COUNT}}"
     - name: Interfaces Spine
-      eos_interfaces:
+      arista.eos.eos_interfaces:
         config:
           - name: 'Ethernet{{ item }}'
             description: 'P2P Link with {{ site }}-Leaf{{ item }}'
             enabled: true
+            mode: layer3
         state: merged
       when: "'Spine' in group_names"
       with_sequence: start=1 end="{{LEAF_COUNT}}"
@@ -52,3 +55,4 @@
         state: merged
       when: (inventory_hostname in item.description) and (inventory_hostname in groups['Leaf'])
       loop: "{{p2p_links}}"
+  tags: p2p

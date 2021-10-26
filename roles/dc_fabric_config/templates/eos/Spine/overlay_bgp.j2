@@ -1,0 +1,26 @@
+
+service routing protocols model multi-agent
+!
+router bgp 65100
+  neighbor LEAF_EVPN peer group
+  neighbor LEAF_EVPN description "Peer group for all LEAF EVPN nodes"
+  neighbor LEAF_EVPN graceful-restart-helper
+  neighbor LEAF_EVPN send-community extended
+  neighbor LEAF_EVPN maximum-routes 10000 warning-only
+  neighbor LEAF_EVPN ebgp-multihop 2
+  neighbor LEAF_EVPN update-source Loopback0
+  {% for peer in Loopback_ip -%}
+  {%- if 'Leaf' in peer.description -%}
+  {% set ASN_NR = (peer.description | regex_search('Leaf([0-9]+)') | regex_replace ("[A-Za-z]","")) -%}
+  {% set LEAF_ASN = ASN_NR | int + BASE_ASN | int -%}
+  neighbor {{ peer.ipv4.split('/')[0] }} peer-group LEAF_EVPN
+  neighbor {{ peer.ipv4.split('/')[0] }} remote-as {{ LEAF_ASN }}
+  {% endif -%}
+  {% endfor -%}
+  !
+  address-family EVPN
+  neighbor LEAF_EVPN activate
+  !
+  address-family ipv4
+  no neighbor LEAF_EVPN activate
+!

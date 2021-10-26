@@ -1,0 +1,24 @@
+Here follows a list of issues encountered and how i solved them.
+I hope this makes the life of anyone else who reads this easier, should they encounter similar issues in their code.
+
+#1 Error messages generated when pushing configuration that already exists on the device:
+
+When certain BGP and IP prefix configuration already exists on the device Ansible will generate an error.
+Even though the idempotent nature of Ansible should cover this i still see it happen with certain modules
+(i mainly tested the Arista and Cisco network modules so far)
+
+#2 Always use the FQCN
+
+using "eos_interfaces" instead of "arista.eos.eos_interfaces" in the Build_P2P_Links playbook caused an error
+when trying to set the "mode: layer3" parameter (which turns it into a routed interface)
+Issue was solved by using the FQCN, it was only giving an error if i included this particular parameter.
+
+#3 Jinja conditionals and other logic cause unintended whitespace
+
+This is actually "normal" behavior with Jinja but it can cause some frustration.
+Every iteration in a for loop for example will add additional whitespace. 
+
+You solve this by adding dashes in the right location of your code.
+e.g. The following removed unwanted whitespace0
+{% for peer in p2p_links -%}
+{%- if inventory_hostname in peer.description -%}

@@ -1,0 +1,28 @@
+
+service routing protocols model multi-agent
+
+{% set ASN_NR = (inventory_hostname | regex_search('([0-9]+)')) %}
+{% set LEAF_ASN = ASN_NR | int + BASE_ASN | int %}
+ip routing
+
+router bgp {{ LEAF_ASN }}
+  neighbor SPINE_EVPN peer group
+  neighbor SPINE_EVPN description "Peer group for all SPINE EVPN nodes"
+  neighbor SPINE_EVPN graceful-restart-helper
+  neighbor SPINE_EVPN send-community extended
+  neighbor SPINE_EVPN maximum-routes 10000 warning-only
+  neighbor SPINE_EVPN ebgp-multihop 2
+  neighbor SPINE_EVPN update-source Loopback0
+  {% for peer in Loopback_ip -%}
+  {%- if 'Spine' in peer.description -%}
+  neighbor {{ peer.ipv4.split('/')[0] }} peer-group SPINE_EVPN
+  neighbor {{ peer.ipv4.split('/')[0] }} remote-as 65100
+  {% endif -%}
+  {% endfor -%}
+  !
+  address-family EVPN
+  neighbor SPINE_EVPN activate
+  !
+  address-family ipv4
+  no neighbor SPINE_EVPN activate
+!
